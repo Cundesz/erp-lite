@@ -1,107 +1,59 @@
-# ERP Lite — Projeto de Estudo
+# ERP Lite
 
-Projeto simples de ERP (Clientes, Produtos e Pedidos) usando a mesma stack de
-vagas de desenvolvedor full stack júnior: **Next.js + TypeScript + API Routes
-(Node.js) + Prisma + PostgreSQL**.
+Sistema de gestão comercial (clientes, produtos e pedidos) com dashboard, autenticação e temas claro/escuro. Deploy contínuo na Vercel com PostgreSQL na Neon.
 
-## Pré-requisitos
+**Demo:** https://erplite-rho.vercel.app · login `admin@erp.com` / `admin123`
 
-- Node.js 18 ou superior instalado
-- PostgreSQL instalado e rodando localmente (ou via Docker)
+## Funcionalidades
 
-## 1. Criar o banco de dados
+- **Dashboard** com KPIs (clientes, produtos, pedidos, receita), pedidos recentes e alerta de estoque baixo
+- **Clientes** — cadastro, busca e exclusão
+- **Produtos** — catálogo com preço, controle de estoque e badges por nível
+- **Pedidos** — criação vinculada a cliente/produto, cálculo de total e fluxo de status (pendente → pago → enviado → entregue)
+- **Autenticação** — login com senha em hash (bcrypt), sessão JWT em cookie httpOnly e rotas protegidas por middleware
+- **Temas claro/escuro** com `next-themes`, layout responsivo com sidebar
 
-Abra o `psql` ou uma ferramenta como DBeaver/pgAdmin e crie um banco vazio:
+## Stack
 
-```sql
-CREATE DATABASE erp_lite;
-```
+Next.js 14 (App Router) · TypeScript · API Routes · Prisma ORM · PostgreSQL · Tailwind CSS · shadcn/ui · next-themes · bcryptjs · jose
 
-Se preferir Docker, sem precisar instalar Postgres na máquina:
+## Rodando localmente
 
-```bash
-docker run --name erp-lite-db -e POSTGRES_PASSWORD=senha -e POSTGRES_DB=erp_lite -p 5432:5432 -d postgres:16
-```
-
-## 2. Configurar variáveis de ambiente
+Pré-requisitos: Node.js 18+ e PostgreSQL local (ou `docker run --name erp-lite-db -e POSTGRES_PASSWORD=senha -e POSTGRES_DB=erp_lite -p 5432:5432 -d postgres:16`).
 
 ```bash
-cp .env.example .env
-```
-
-Edite o `.env` com usuário, senha e nome do banco que você criou:
-
-```
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/erp_lite?schema=public"
-```
-
-## 3. Instalar dependências
-
-```bash
+cp .env.example .env   # preencha DATABASE_URL e AUTH_SECRET
 npm install
+npx prisma migrate dev # cria as tabelas e gera o Prisma Client
+npm run seed:admin      # cria admin@erp.com / admin123
+npm run seed            # dados de exemplo (opcional)
+npm run dev            # http://localhost:3000
 ```
 
-## 4. Rodar as migrations (cria as tabelas no Postgres)
+## Deploy
 
-```bash
-npx prisma migrate dev --name init
-```
+Push na `main` publica automaticamente na Vercel. O `npm run build` executa `prisma generate && prisma migrate deploy && next build`, então as migrations acompanham o deploy. Variáveis necessárias: `DATABASE_URL` (Neon, pooled) e `AUTH_SECRET`.
 
-Isso lê o `prisma/schema.prisma`, cria as tabelas `Cliente`, `Produto`,
-`Pedido` e `ItemPedido` no banco, e gera o Prisma Client.
-
-## 5. (Opcional) Popular com dados de exemplo
-
-```bash
-npm run seed
-```
-
-## 6. Rodar o projeto
-
-```bash
-npm run dev
-```
-
-Acesse **http://localhost:3000**.
-
-## Estrutura do projeto (e onde está cada conceito da vaga)
+## Estrutura
 
 ```
 app/
-  layout.tsx          -> layout raiz com o menu de navegação
-  page.tsx            -> página inicial ("/")
-  clientes/page.tsx    -> tela de CRUD de clientes (React + fetch)
-  produtos/page.tsx    -> tela de CRUD de produtos
-  pedidos/page.tsx     -> tela de criação de pedidos (junta cliente + produto)
+  page.tsx              -> dashboard com KPIs
+  login/page.tsx        -> tela de login
+  clientes|produtos|pedidos/page.tsx -> telas de gestão (client components + fetch)
   api/
-    clientes/route.ts       -> GET (listar) e POST (criar) — API REST
-    clientes/[id]/route.ts  -> GET, PUT, DELETE de um cliente específico
-    produtos/...             -> mesma ideia pra produtos
-    pedidos/...               -> mesma ideia pra pedidos (com itens relacionados)
+    auth/login|logout|me -> autenticação e sessão
+    clientes|[id] | produtos|[id] | pedidos|[id] -> REST (GET/POST/PUT/DELETE)
+components/
+  sidebar.tsx           -> navegação, usuário logado, logout, toggle de tema
+  theme-provider.tsx / theme-toggle.tsx -> dark/light via next-themes
+  ui/                   -> primitivos estilo shadcn (button, card, input, badge, table)
 lib/
-  prisma.ts           -> instância única do Prisma Client (evita reconectar toda hora)
+  prisma.ts             -> instância única do Prisma Client
+  auth.ts               -> hash bcrypt + sessão JWT em cookie
+  session.ts            -> verificação de token (edge-safe, usada no middleware)
+middleware.ts           -> protege páginas e APIs, redireciona p/ /login
 prisma/
-  schema.prisma       -> modelo das tabelas do banco (Cliente, Produto, Pedido, ItemPedido)
-  seed.js             -> script pra popular o banco com dados de teste
+  schema.prisma         -> Cliente, Produto, Pedido, ItemPedido, Usuario
+  seed.js / seed-admin.js -> dados de exemplo e usuário admin
 ```
-
-### Conceitos que esse projeto exercita
-
-- **Next.js (App Router)**: rotas por pasta, tanto de páginas quanto de API
-- **API Routes = seu "Node.js"**: cada `route.ts` dentro de `app/api/` é um
-  endpoint REST rodando em Node, sem precisar de um servidor Express separado
-- **TypeScript**: tipagem em todas as páginas e rotas
-- **Prisma**: ORM que traduz `prisma.cliente.findMany()` em SQL de verdade,
-  e cuida das migrations
-- **PostgreSQL**: banco relacional de verdade, com relacionamento entre
-  Cliente → Pedido → ItemPedido → Produto
-- **API REST**: os verbos GET/POST/PUT/DELETE em cada rota
-
-## Próximos passos sugeridos (pra você evoluir sozinho)
-
-1. Adicionar autenticação simples (login) — dá pra usar NextAuth.js
-2. Adicionar validação mais robusta (ex: biblioteca `zod`) nas rotas de API
-3. Permitir vários itens no mesmo pedido de uma vez (o código já suporta
-   isso na API, falta só o formulário permitir adicionar mais de uma linha)
-4. Estilizar com Tailwind CSS (citado como diferencial na vaga)
-5. Escrever um teste automatizado simples pra uma das rotas de API

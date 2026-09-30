@@ -103,7 +103,7 @@ export function Sidebar() {
             <ThemeToggle />
           </div>
           {usuario && (
-            <div className="mb-3 flex items-center gap-2 rounded-lg border border-border bg-card-2 p-3">
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-card-2 p-3">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent-600/30 bg-accent-500/10 text-[11px] font-bold text-accent-400">
                 {initials(usuario.nome)}
               </span>
@@ -121,10 +121,6 @@ export function Sidebar() {
               </button>
             </div>
           )}
-          <div className="rounded-lg border border-border bg-card-2 p-3 text-xs text-muted">
-            <p className="font-semibold text-accent-400">Stack de estudo</p>
-            <p className="mt-1 leading-relaxed">Next.js + TypeScript + Prisma + PostgreSQL</p>
-          </div>
         </div>
       </aside>
     </>
