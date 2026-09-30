@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Package, ShoppingCart, Menu, X } from "lucide-react";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, Users, Package, ShoppingCart, Menu, X, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
+import { cn, initials } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const links = [
@@ -16,7 +16,22 @@ const links = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [usuario, setUsuario] = useState<{ nome: string; email: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => data && setUsuario(data))
+      .catch(() => {});
+  }, []);
+
+  async function sair() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <>
@@ -73,12 +88,42 @@ export function Sidebar() {
               </Link>
             );
           })}
+          <button
+            onClick={sair}
+            className="flex items-center gap-3 rounded-md border border-transparent px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-white/5 hover:text-red-400 lg:hidden"
+          >
+            <LogOut size={17} />
+            Sair{usuario ? ` (${usuario.nome})` : ""}
+          </button>
         </nav>
 
         <div className="mt-auto hidden p-4 lg:block">
           <div className="mb-3 flex items-center justify-between">
             <span className="text-xs text-faint">Tema</span>
             <ThemeToggle />
+          </div>
+          {usuario && (
+            <div className="mb-3 flex items-center gap-2 rounded-lg border border-border bg-card-2 p-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent-600/30 bg-accent-500/10 text-[11px] font-bold text-accent-400">
+                {initials(usuario.nome)}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-semibold">{usuario.nome}</p>
+                <p className="truncate text-[11px] text-faint">{usuario.email}</p>
+              </div>
+              <button
+                onClick={sair}
+                className="rounded-md p-1.5 text-faint hover:bg-white/5 hover:text-red-400"
+                title="Sair"
+                aria-label="Sair"
+              >
+                <LogOut size={15} />
+              </button>
+            </div>
+          )}
+          <div className="rounded-lg border border-border bg-card-2 p-3 text-xs text-muted">
+            <p className="font-semibold text-accent-400">Stack de estudo</p>
+            <p className="mt-1 leading-relaxed">Next.js + TypeScript + Prisma + PostgreSQL</p>
           </div>
         </div>
       </aside>

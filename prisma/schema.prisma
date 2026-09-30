@@ -43,3 +43,11 @@ model ItemPedido {
   quantidade Int
   precoUnit  Float
 }
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  senhaHash String
+  criadoEm  DateTime @default(now())
+}
