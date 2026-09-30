@@ -66,7 +66,7 @@ export default function Home() {
           <span className="italic text-accent-400">confiáveis</span>.
         </h1>
         <p className="mt-1 text-sm text-muted">
-          Visão geral do seu ERP — Next.js + TypeScript + Prisma + PostgreSQL.
+          Visão geral do ERP.
         </p>
       </div>
 
